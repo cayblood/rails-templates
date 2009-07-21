@@ -1,23 +1,53 @@
-############## plugin commands #################
-plugin 'rspec', :git => "git://github.com/dchelimsky/rspec.git", :submodule => true
-plugin 'rspec-rails', :git => "git://github.com/dchelimsky/rspec-rails.git", :submodule => true
-plugin 'factory_girl', :git => "git://github.com/thoughtbot/factory_girl.git", :submodule => true
-plugin 'cucumber', :git => "git://github.com/aslakhellesoy/cucumber.git", :submodule => true
+# remove tmp dirs
+run "rmdir tmp/{pids,sessions,sockets,cache}"
 
-############## generate commands #################
-generate("rspec")
+# remove unnecessary stuff
+run "rm README log/*.log public/index.html public/images/rails.png"
 
-##############  commands #################
-run "touch tmp/.gitignore log/.gitignore vendor/.gitignore"
-run %{find . -type d -empty | grep -v "vendor" | grep -v ".git" | grep -v "tmp" | xargs -I xxx touch xxx/.gitignore}
-file '.gitignore', <<-END
-  .DS_Store
-  log/*.log
-  tmp/**/*
-  config/database.yml
-  db/*.sqlite3
-END
-run "rm README"
-run "rm public/index.html"
-run "rm public/favicon.ico"
-run "rm public/robots.txt"
+# keep empty dirs
+run("find . \\( -type d -empty \\) -and \\( -not -regex ./\\.git.* \\) -exec touch {}/.gitignore \\;")
+
+# init git repo
+git :init
+
+# basic .gitignore file
+file '.gitignore', 
+%q{log/*.log
+log/*.pid
+db/*.db
+db/*.sqlite3
+db/schema.rb
+tmp/**/*
+.DS_Store
+doc/api
+doc/app
+config/database.yml
+autotest_result.html
+coverage
+public/javascripts/*_[0-9]*.js
+public/stylesheets/*_[0-9]*.css
+public/attachments
+}
+
+# copy sample database config
+run "cp config/database.yml config/example_database.yml"
+
+# gems
+gem 'rspec', :lib => 'spec'
+gem 'rspec-rails', :lib => 'spec/rails'
+gem 'cucumber'
+rake "gems:install", :sudo => true
+run "rm -f log/*.log", :sudo => true # delete log to avoid ownership warnings
+rake "gems:unpack"
+
+# remove test dir
+run "rm -rf test"
+
+# generate
+generate :rspec
+generate :cucumber
+
+# set up git
+git :init
+git :add => "."
+git :commit => "-a -m 'Initial commit'"
