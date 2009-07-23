@@ -59,17 +59,17 @@ end
 # copy sample database config
 run "cp config/database.yml config/example_database.yml"
 
-# gems
-gem 'rspec', :lib => 'spec'
-gem 'rspec-rails', :lib => 'spec/rails'
-gem 'cucumber'
-rake "gems:install", :sudo => true
-rake "gems:build", :sudo => true
-run "rm -f log/*.log", :sudo => true # delete log to avoid ownership warnings
-rake "gems:unpack"
-
 # remove test dir
 run "rm -rf test"
+
+# set up git
+git :init
+
+# add plugins
+plugin 'rspec', :git => "git://github.com/dchelimsky/rspec.git", :submodule => true
+plugin 'rspec-rails', :git => "git://github.com/dchelimsky/rspec-rails.git", :submodule => true
+plugin 'factory_girl', :git => "git://github.com/thoughtbot/factory_girl.git", :submodule => true
+plugin 'cucumber', :git => "git://github.com/aslakhellesoy/cucumber.git", :submodule => true
 
 # generate
 generate :rspec
@@ -78,7 +78,6 @@ generate :cucumber
 # rake tasks
 rake 'db:schema:dump'
 
-# set up git
-git :init
+# add everything to git and commit
 git :add => "."
 git :commit => "-a -m 'Initial commit'"
